@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload and List</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f0f4f8;
+        }
+
+        .upload-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            transition: background 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #0056b3;
+        }
+
+        .upload-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .upload-btn:hover {
+            background-color: #218838;
+        }
+
+        .file-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .file-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .file-list-item {
+            background: #eef2f7;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .file-list-item:hover {
+            transform: translateX(5px);
+        }
+
+        .file-list-item a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .file-list-item a:hover {
+            text-decoration: underline;
+        }
+
+        .upload-date {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h2>Upload a File</h2>
+        <label for="fileInput" class="custom-file-upload">Choose File</label>
+        <input type="file" id="fileInput" multiple>
+        <button class="upload-btn" onclick="uploadFile()">Upload</button>
+
+        <div class="file-list" id="fileList">
+            <h3>Uploaded Files:</h3>
+            <ul id="fileListContainer"></ul>
+        </div>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const fileListContainer = document.getElementById('fileListContainer');
+
+            for (let file of fileInput.files) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('upload.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        fetchFiles();  // Refresh file list after upload
+                    } else {
+                        alert('Upload failed: ' + result.message);
+                    }
+                } catch (error) {
+                    alert('Error uploading file');
+                    console.error(error);
+                }
+            }
+
+            fileInput.value = '';
+        }
+
+        // Fetch file list from server
+        async function fetchFiles() {
+            const response = await fetch('list_files.php');
+            const files = await response.json();
+            const fileListContainer = document.getElementById('fileListContainer');
+            fileListContainer.innerHTML = '';
+
+            files.forEach(file => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('file-list-item');
+                listItem.innerHTML = `<a href="uploads/${file}" download>${file}</a> <span class="upload-date">[Uploaded: Today]</span>`;
+                fileListContainer.appendChild(listItem);
+            });
+        }
+
+        // Load files on page load
+        document.addEventListener('DOMContentLoaded', fetchFiles);
+    </script>
+</body>
+</html>
